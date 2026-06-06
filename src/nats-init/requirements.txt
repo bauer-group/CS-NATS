@@ -2,4 +2,4 @@
 # Floating minor versions are acceptable (BAUER GROUP security standard);
 # Dependabot opens PRs for updates. The `nats` CLI itself is copied from the
 # natsio/nats-box image at build time (see Dockerfile) — not a pip dependency.
-rich>=13,<15
+rich>=15.0.0,<16
