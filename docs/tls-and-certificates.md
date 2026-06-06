@@ -9,8 +9,8 @@ implementation plan). TLS is layered in three modes via `NATS_TLS_MODE`.
 | Mode | Behaviour |
 | --- | --- |
 | `selfsigned` (default) | One 4096-bit, 10-year self-signed cert **shared** by all three nodes is generated on first boot. SAN covers `nats-1`, `nats-2`, `nats-3`, `localhost`, `127.0.0.1`, and `NATS_CLIENT_HOSTNAME`. Zero-config; clients trust the generated `ca.pem`. |
-| `managed` | Uses `cert.pem`/`key.pem` written into the shared certs volume by the `traefik-certs-dumper` sidecar (real Let's Encrypt). Falls back to self-signed if absent (waits up to `NATS_TLS_MANAGED_WAIT`s). |
-| `byo` | Uses operator-provided `cert.pem`/`key.pem` placed in the shared certs volume; fails fast if missing. |
+| `byo` | Uses operator-provided `cert.pem`/`key.pem` placed in the shared certs volume; fails fast if missing. **The production path for a real CA-signed cert.** |
+| `managed` | Waits for `cert.pem`/`key.pem` to be written into the shared certs volume by an **external issuer** (cert-manager, acme.sh, a cron job, …). Falls back to self-signed if absent (waits up to `NATS_TLS_MANAGED_WAIT`s). |
 
 In every mode the entrypoint guarantees `ca.pem` exists and `chmod 600`s the key.
 
@@ -49,26 +49,20 @@ docker cp <stack>_NODE1:/etc/nats/certs/ca.pem ./ca.pem
 nats --tlsca ./ca.pem --creds ./creds/app.creds --server nats://host:4222 ...
 ```
 
-## Managed Let's Encrypt (Traefik)
+## Managed (external issuer)
 
 ```
-Traefik (solves ACME, stores in acme.json)
-        │
+external issuer (cert-manager / acme.sh / cron)
+        │  writes cert.pem + key.pem
         ▼
-certs-dumper  ──writes──▶  nats-certs volume  (cert.pem, key.pem)
-                                   │
-                                   ▼
-                              nats-N  ──serves──▶  client TLS :4222
+nats-certs volume  ──▶  nats-N  ──serves──▶  client TLS :4222
 ```
 
-```bash
-# .env: NATS_TLS_MODE=managed   (and set TRAEFIK_ACME_FILE)
-docker compose -f docker-compose.traefik.yml --profile tls-letsencrypt up -d
-```
-
-The dumper writes the default certificate; ensure Traefik serves the client
-hostname's certificate as default (or extend the dumper command with
-`--domain-subdir` + a post-hook).
+Set `NATS_TLS_MODE=managed` and have any external process drop `cert.pem` /
+`key.pem` (and optionally `ca.pem`) into the shared `nats-certs` volume. The
+entrypoint waits up to `NATS_TLS_MANAGED_WAIT` seconds for them and otherwise
+falls back to a self-signed cert. (There is no built-in ACME/Traefik sidecar —
+the stack has no reverse proxy; bring your own issuer or use `byo`.)
 
 ## Bring your own (`byo`)
 
@@ -84,8 +78,8 @@ docker run --rm -v <stack>-certs:/certs -v "$PWD":/in alpine \
 ## NATS WebSocket (optional, `wss://`)
 
 NATS can serve browser clients over WebSocket. It is **off by default**. To
-enable, add a `websocket {}` block to the server config and expose it via
-Traefik (`WS_HOSTNAME`). Example block:
+enable, add a `websocket {}` block to the server config and publish port `8080`
+directly (`PORT_WEBSOCKET`). Example block:
 
 ```hocon
 websocket {

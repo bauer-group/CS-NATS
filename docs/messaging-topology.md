@@ -39,7 +39,7 @@ The init authenticates as the **APP-account admin** (`/creds/admin.creds`).
 | Deployment | Path | Source |
 | --- | --- | --- |
 | development | `config/nats-topology.json` | repo bind-mount (edit in your IDE) |
-| cluster / traefik / coolify | `/config/nats-topology.json` | `nats-config` volume, seeded with the demo on first boot |
+| cluster / coolify | `/config/nats-topology.json` | `nats-config` volume, seeded with the demo on first boot |
 
 Override the in-container path with `NATS_INIT_CONFIG`.
 

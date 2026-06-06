@@ -31,6 +31,7 @@ DATA_DIR="/data"
 : "${NATS_TLS_VERIFY:=false}"
 : "${NATS_TLS_CN:=${NATS_SERVER_NAME}}"
 : "${NATS_TLS_MANAGED_WAIT:=0}"
+: "${NATS_CLIENT_ADVERTISE:=}"
 : "${NATS_RUN_AS:=nats}"
 export NATS_SERVER_NAME NATS_CLUSTER_NAME NATS_ROUTE_USER NATS_ROUTE_PASSWORD \
        NATS_JS_MAX_MEM NATS_JS_MAX_FILE NATS_MAX_PAYLOAD NATS_MAX_CONNECTIONS \
@@ -49,6 +50,7 @@ banner() {
   log "Max payload          : ${NATS_MAX_PAYLOAD}"
   log "TLS mode (client)    : ${NATS_TLS_MODE} (verify=${NATS_TLS_VERIFY})"
   log "Auth                 : operator/JWT, MEMORY resolver"
+  log "Client advertise     : ${NATS_CLIENT_ADVERTISE:-(internal only)}"
   log "============================================="
 }
 
@@ -108,8 +110,8 @@ provision_tls() {
       log "- Using bring-your-own TLS certificate -"
       ;;
     managed)
-      # The traefik-certs-dumper sidecar writes cert.pem/key.pem into the shared
-      # certs volume. It may not be present on the very first boot.
+      # An external issuer (cert-manager / acme.sh / cron) writes cert.pem and
+      # key.pem into the shared certs volume. It may not be present on first boot.
       waited=0
       while [ ! -f "${CERT_DIR}/cert.pem" ] || [ ! -f "${CERT_DIR}/key.pem" ]; do
         if [ "${waited}" -ge "${NATS_TLS_MANAGED_WAIT}" ]; then
@@ -160,6 +162,15 @@ render_config() {
     '${NATS_JS_MAX_MEM} ${NATS_JS_MAX_FILE}'
   render_one "${CONF_DIR}/auth.conf.template" "${CONF_DIR}/auth.conf" \
     '${NATS_OPERATOR_JWT} ${NATS_SYS_ACCOUNT_ID} ${NATS_SYS_ACCOUNT_JWT} ${NATS_APP_ACCOUNT_ID} ${NATS_APP_ACCOUNT_JWT}'
+
+  # client_advertise (Model B). Written here (not envsubst) so it can be a
+  # conditional single line; an empty file is a valid no-op include.
+  if [ -n "${NATS_CLIENT_ADVERTISE}" ]; then
+    printf 'client_advertise: "%s"\n' "${NATS_CLIENT_ADVERTISE}" > "${CONF_DIR}/advertise.conf"
+  else
+    : > "${CONF_DIR}/advertise.conf"
+  fi
+
   chown -R "${NATS_RUN_AS}:${NATS_RUN_AS}" "${ETC}" 2>/dev/null || true
 }
 

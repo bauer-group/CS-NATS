@@ -65,6 +65,8 @@ services:
     environment:
       <<: *nats-env
       NATS_SERVER_NAME: nats-1
+      # Model B: PUBLIC address clients use to reach THIS node (direct failover).
+      NATS_CLIENT_ADVERTISE: ${NATS_ADVERTISE_NODE1:-}
     ports:
       - "${PORT_CLIENT:-4222}:4222"
       - "${PORT_MONITOR:-8222}:8222"
@@ -79,6 +81,7 @@ services:
     environment:
       <<: *nats-env
       NATS_SERVER_NAME: nats-2
+      NATS_CLIENT_ADVERTISE: ${NATS_ADVERTISE_NODE2:-}
     ports:
       - "${PORT_CLIENT_2:-4223}:4222"
     volumes:
@@ -92,6 +95,7 @@ services:
     environment:
       <<: *nats-env
       NATS_SERVER_NAME: nats-3
+      NATS_CLIENT_ADVERTISE: ${NATS_ADVERTISE_NODE3:-}
     ports:
       - "${PORT_CLIENT_3:-4224}:4222"
     volumes:

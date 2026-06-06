@@ -32,6 +32,13 @@ include "conf.d/jetstream.conf"
 # --- Authentication: operator/JWT, MEMORY resolver (public account JWTs) ---
 include "conf.d/auth.conf"
 
+# --- External client advertise (Model B: direct multi-node failover) ---
+# Written by the entrypoint from NATS_CLIENT_ADVERTISE — the PUBLIC host:port
+# clients use to reach THIS node, so the cluster gossips reachable addresses and
+# clients failover directly (no load balancer / single point of failure). Empty
+# file when unset (internal-only / localhost dev).
+include "conf.d/advertise.conf"
+
 # --- Cluster (RAFT routes) ---
 # Plaintext on the isolated compose network, protected by route authorization.
 # Operator/JWT auth above applies to CLIENT connections only — routes use this

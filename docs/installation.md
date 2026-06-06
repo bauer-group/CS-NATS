@@ -14,7 +14,7 @@ python scripts/generate-env.py
 
 Creates `.env` from `.env.example` and fills the `CHANGE_ME_*` hex secrets (the
 cluster route password). Review `.env` afterwards — pick a sizing preset and set
-hostnames for Traefik/Coolify.
+public hostnames for external access (`NATS_ADVERTISE_NODE*`) / Coolify.
 
 ## 2. Bootstrap operator / JWT credentials
 
@@ -53,10 +53,10 @@ docker compose -f docker-compose.development.yml up -d --build
 
 # Cluster (direct ports, pre-built GHCR images)
 docker compose -f docker-compose.cluster.yml up -d
-
-# Traefik (HTTPS metrics via Let's Encrypt)
-docker compose -f docker-compose.traefik.yml up -d
 ```
+
+For access from outside the host, set `NATS_ADVERTISE_NODE1/2/3` in `.env` (see
+[clustering.md](clustering.md#external-access-model-b)).
 
 ## 5. Verify
 

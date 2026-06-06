@@ -46,6 +46,55 @@ docker exec <stack>_BOX nats --creds /creds/sys-user.creds server report jetstre
 docker exec <stack>_BOX nats stream info <name>
 ```
 
+## External access (Model B)
+
+There is **no load balancer or reverse proxy** in front of NATS — that would be a
+single point of failure, and NATS doesn't need one: clients are cluster-aware and
+do their own failover. NATS also load-balances *messages* itself (queue groups +
+JetStream leader routing), so an external balancer is never needed for that.
+
+The only thing the cluster needs for external access is for each node to
+advertise a **reachable** address. By default a node advertises its internal
+Docker address, which an outside client can't reach — so when the client fails
+over it would try unreachable peers.
+
+**Model B — `client_advertise` per node.** Each node advertises its PUBLIC
+`host:port`; a client connects once (to any node), learns all three public
+addresses via gossip, and then fails over **directly** to the nodes — no
+intermediary in the steady-state path:
+
+```text
+client ──connect──▶ nats.example.com:4222 (node 1)
+       ◀──gossip──  [nats.example.com:4222, :4223, :4224]   # advertised, reachable
+       ──failover─▶ any node directly
+```
+
+Enable it by setting one variable per node in `.env` (cluster mode publishes
+`4222`/`4223`/`4224` on the host):
+
+```bash
+NATS_ADVERTISE_NODE1=nats.example.com:4222
+NATS_ADVERTISE_NODE2=nats.example.com:4223
+NATS_ADVERTISE_NODE3=nats.example.com:4224
+```
+
+The entrypoint then renders `client_advertise` into each node's config
+(`conf.d/advertise.conf`). Leave the variables empty for internal-only or
+localhost development (no advertise — clients should then connect to a single
+node, or run inside the Docker network where internal gossip is correct).
+
+Clients connect with all three public URLs as seeds:
+
+```bash
+nats --creds ./app.creds --tlsca ./ca.pem \
+     --server "tls://nats.example.com:4222,tls://nats.example.com:4223,tls://nats.example.com:4224" ...
+```
+
+> Nodes on **separate hosts**? Set each node's advertise to its own
+> `host:4222`, and update the `routes` in `nats-server.conf.template` to the
+> real inter-node addresses (the default `nats-1/2/3` aliases assume one Docker
+> network).
+
 ## Rolling restart / upgrade
 
 Recreate one node at a time, waiting for `(healthy)` between each, so the

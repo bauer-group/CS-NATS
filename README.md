@@ -31,10 +31,11 @@ ships as the operational CLI and a `prometheus-nats-exporter` scrapes all nodes.
 - **Sizing presets** — small / medium / large tuning, documented as a table in
   `.env.example`, keyed by streams + retained data. **Default: small.**
 - **Layered client TLS** — self-signed (zero-config, race-safe shared cert) →
-  managed Let's Encrypt (certs-dumper sidecar) → bring-your-own. Routes plaintext
-  on the isolated network.
-- **Four deployment modes** — development (local build), cluster (direct ports),
-  Traefik (HTTPS metrics + LE), Coolify (dashboard domains).
+  bring-your-own (real CA cert) → managed (external issuer writes into the certs
+  volume). Routes plaintext on the isolated network.
+- **Three deployment modes** — development (local build), cluster (direct ports),
+  Coolify (dashboard domains). No reverse proxy / LB: NATS is raw TCP and does
+  its own client-side failover (see `client_advertise`, below).
 - **CI/CD automation** — semantic releases, GHCR image builds, base-image
   monitoring, Dependabot auto-merge, SBOMs, Teams + AI issue triage.
 
@@ -69,17 +70,18 @@ ships as the operational CLI and a `prometheus-nats-exporter` scrapes all nodes.
 
    # Cluster (direct ports, pre-built GHCR images)
    docker compose -f docker-compose.cluster.yml up -d
-
-   # Traefik (HTTPS metrics via Let's Encrypt)
-   docker compose -f docker-compose.traefik.yml up -d
    ```
 
 6. **Access**
 
    | Mode | Client | Monitoring | Metrics |
    | --- | --- | --- | --- |
-   | Development / Cluster | `nats://localhost:4222` (TLS) | `http://localhost:8222/healthz` | `http://localhost:7777/metrics` |
-   | Traefik | `nats://${HOST}:4222` (TLS) | (internal) | `https://${METRICS_HOSTNAME}/metrics` (basic-auth) |
+   | Development | `nats://localhost:4222` (TLS, nats-1 only) | `http://localhost:8222/healthz` | `http://localhost:7777/metrics` |
+   | Cluster | `nats://localhost:4222` / `:4223` / `:4224` (TLS, all 3) | `http://localhost:8222/healthz` | `http://localhost:7777/metrics` |
+
+   For access from **outside** the host, set `NATS_ADVERTISE_NODE1/2/3` so each
+   node advertises its public address and clients failover directly across all
+   three (no load balancer) — see [docs/clustering.md](docs/clustering.md).
 
    Clients authenticate with a `.creds` file and the CA. Inside `nats-box` the
    `nats` CLI is pre-wired:
@@ -114,7 +116,6 @@ ships as the operational CLI and a `prometheus-nats-exporter` scrapes all nodes.
 | --- | --- | --- | --- |
 | **Development** | `docker-compose.development.yml` | host ports | local builds & testing (mounts demo topology) |
 | **Cluster** | `docker-compose.cluster.yml` | host ports | single-host 3-node cluster, GHCR images |
-| **Traefik** | `docker-compose.traefik.yml` | Traefik + Let's Encrypt | HTTPS metrics, optional LE cert on client TLS |
 | **Coolify** | `docker-compose.coolify.yml` | Coolify dashboard | PaaS-managed domains & TLS |
 
 ## Configuration

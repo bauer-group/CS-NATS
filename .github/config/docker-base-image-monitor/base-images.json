@@ -29,13 +29,6 @@
       "tag": "latest",
       "variable": "NATS_EXPORTER_DIGEST",
       "description": "Prometheus exporter scraping the node monitoring endpoints (docker-compose*.yml)"
-    },
-    {
-      "name": "traefik-certs-dumper",
-      "image": "ldez/traefik-certs-dumper",
-      "tag": "latest",
-      "variable": "TRAEFIK_CERTS_DUMPER_DIGEST",
-      "description": "Optional sidecar that dumps Let's Encrypt certs for client TLS (docker-compose.traefik.yml)"
     }
   ],
   "settings": {

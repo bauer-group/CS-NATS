@@ -6,7 +6,7 @@
 # dashboard — this file exposes the right ports and declares the env it needs.
 #
 # Configure in Coolify (Service → Configuration):
-#   - nats-exporter → Domain = ${METRICS_HOSTNAME}  Port = 7777   (Prometheus)
+#   - nats-exporter → Domain = <your-metrics-domain>  Port = 7777  (Prometheus)
 #
 # NATS client (4222) and routes (6222) are raw TCP — map the client ports via
 # Coolify's port mapping (or expose on the host).
@@ -64,6 +64,8 @@ services:
     environment:
       <<: *nats-env
       NATS_SERVER_NAME: nats-1
+      # Model B: set NATS_ADVERTISE_NODE1 to the public Coolify host:port.
+      NATS_CLIENT_ADVERTISE: ${NATS_ADVERTISE_NODE1:-}
     ports:
       - "${PORT_CLIENT:-4222}:4222"
     volumes:
@@ -135,7 +137,7 @@ services:
       - "http://nats-2:8222"
       - "http://nats-3:8222"
     expose:
-      # Coolify routes ${METRICS_HOSTNAME} -> 7777 from the dashboard.
+      # Coolify routes your configured metrics domain -> 7777 from the dashboard.
       - 7777/tcp
     depends_on:
       - nats-1

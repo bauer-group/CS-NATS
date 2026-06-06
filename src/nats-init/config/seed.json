@@ -1,5 +1,5 @@
 {
-  "_comment": "BAUER GROUP NATS - baked demo topology. Seeded into the config volume on first boot (cluster/traefik/coolify) if no user topology exists, then editable at runtime. Literal names (no ${VAR}) so it is self-contained. Replace with your own topology; full field reference: docs/messaging-topology.md.",
+  "_comment": "BAUER GROUP NATS - baked demo topology. Seeded into the config volume on first boot (cluster/coolify) if no user topology exists, then editable at runtime. Literal names (no ${VAR}) so it is self-contained. Replace with your own topology; full field reference: docs/messaging-topology.md.",
 
   "streams": [
     {

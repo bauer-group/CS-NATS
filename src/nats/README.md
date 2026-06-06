@@ -35,7 +35,7 @@ survives untouched.
 | Mode | Behaviour |
 | --- | --- |
 | `selfsigned` (default) | Generates one 4096-bit, 10-year self-signed cert **shared** by all three nodes (SAN covers `nats-1/2/3`, `localhost`). Race-safe via an atomic `mkdir`-lock on the shared certs volume. `NATS_TLS_VERIFY=false`. |
-| `managed` | Uses `cert.pem`/`key.pem` written into the certs volume by a `traefik-certs-dumper` sidecar (real Let's Encrypt). Falls back to self-signed if absent (optionally waits `NATS_TLS_MANAGED_WAIT` seconds). |
+| `managed` | Uses `cert.pem`/`key.pem` written into the certs volume by an external issuer (cert-manager, acme.sh, a cron). Falls back to self-signed if absent (optionally waits `NATS_TLS_MANAGED_WAIT` seconds). |
 | `byo` | Uses operator-provided `cert.pem`/`key.pem` in the certs volume; fails fast if missing. |
 
 In every mode the entrypoint guarantees `ca.pem` exists and `chmod 600`s the key.
