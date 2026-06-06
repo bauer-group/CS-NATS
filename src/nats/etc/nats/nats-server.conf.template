@@ -1,0 +1,68 @@
+# =============================================================================
+# BAUER GROUP NATS - Server Configuration (TEMPLATE)
+# =============================================================================
+# Rendered to /etc/nats/nats-server.conf at boot by docker-entrypoint-custom.sh
+# (envsubst). Edit the .template, never the rendered .conf — it is overwritten
+# on every start. ${VAR} placeholders come from the container environment.
+# =============================================================================
+
+# Unique per node (nats-1 / nats-2 / nats-3) — REQUIRED for JetStream RAFT.
+server_name: "${NATS_SERVER_NAME}"
+
+# --- Client connections (TLS terminated below) ---
+listen: 0.0.0.0:4222
+
+# --- HTTP monitoring (UNAUTHENTICATED: /varz /jsz /healthz /connz /routez) ---
+# Scraped by the prometheus-nats-exporter and used by the container healthcheck.
+# Keep this OFF the public internet — it is internal to the compose network.
+http: 0.0.0.0:8222
+
+# --- Logging ---
+logtime: true
+debug: false
+trace: false
+
+# --- Global limits (sizing levers; see docs/sizing-and-tuning.md) ---
+max_payload: ${NATS_MAX_PAYLOAD}
+max_connections: ${NATS_MAX_CONNECTIONS}
+
+# --- JetStream (per-node file store) ---
+include "conf.d/jetstream.conf"
+
+# --- Authentication: operator/JWT, MEMORY resolver (public account JWTs) ---
+include "conf.d/auth.conf"
+
+# --- Cluster (RAFT routes) ---
+# Plaintext on the isolated compose network, protected by route authorization.
+# Operator/JWT auth above applies to CLIENT connections only — routes use this
+# simple user/password instead (a cluster authorization block cannot use JWT).
+cluster {
+  name: "${NATS_CLUSTER_NAME}"
+  listen: 0.0.0.0:6222
+
+  authorization {
+    user: "${NATS_ROUTE_USER}"
+    password: "${NATS_ROUTE_PASSWORD}"
+    timeout: 2
+  }
+
+  # Every node lists all three routes; a node ignores its own entry. Service
+  # names (nats-1/2/3) are the compose network aliases. Quoted — the password is
+  # hex and would otherwise be misparsed as a number.
+  routes: [
+    "nats://${NATS_ROUTE_USER}:${NATS_ROUTE_PASSWORD}@nats-1:6222"
+    "nats://${NATS_ROUTE_USER}:${NATS_ROUTE_PASSWORD}@nats-2:6222"
+    "nats://${NATS_ROUTE_USER}:${NATS_ROUTE_PASSWORD}@nats-3:6222"
+  ]
+}
+
+# --- Client TLS (selfsigned | managed | byo — provisioned by the entrypoint) ---
+tls {
+  cert_file: "/etc/nats/certs/cert.pem"
+  key_file:  "/etc/nats/certs/key.pem"
+  ca_file:   "/etc/nats/certs/ca.pem"
+  # false: server presents a cert but does not require client certs (no mTLS).
+  # true:  require + verify client certs (mTLS) — see docs/tls-and-certificates.md.
+  verify: ${NATS_TLS_VERIFY}
+  timeout: 5
+}

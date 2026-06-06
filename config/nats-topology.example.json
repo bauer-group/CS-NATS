@@ -1,0 +1,73 @@
+{
+  "_comment": "BAUER GROUP NATS - example declarative topology. Full field reference: docs/messaging-topology.md. Copy to config/nats-topology.json, edit, and mount it. ${VAR} placeholders resolve from the nats-init environment (missing var = hard error). Keys starting with _ are comments. Processed idempotently on every start; additive only (never deletes). Durations are NANOSECONDS (JetStream wire format): 1s=1000000000, 1m=60000000000, 1h=3600000000000, 1d=86400000000000.",
+
+  "_streams_note": "A stream captures a set of subjects. num_replicas: 3 needs the 3-node cluster (R3 tolerates 1 node down). retention: limits | interest | workqueue. storage: file | memory. discard: old | new. Set max_bytes/max_msgs/max_age to bound growth.",
+  "streams": [
+    {
+      "name": "${APP_STREAM_NAME}",
+      "subjects": ["app.events.>"],
+      "retention": "limits",
+      "storage": "file",
+      "num_replicas": 3,
+      "max_age": 604800000000000,
+      "max_bytes": 5368709120,
+      "max_msgs": -1,
+      "discard": "old",
+      "duplicate_window": 120000000000
+    },
+    {
+      "name": "app-commands",
+      "subjects": ["app.commands.>"],
+      "retention": "workqueue",
+      "storage": "file",
+      "num_replicas": 3,
+      "max_age": 86400000000000,
+      "discard": "old"
+    }
+  ],
+
+  "_kv_note": "Key/Value buckets are JetStream streams under the hood. history = revisions kept per key. ttl is a Go duration string ('24h', '0s'); 0s = no expiry.",
+  "kv": [
+    {
+      "bucket": "app-config",
+      "history": 5,
+      "ttl": "0s",
+      "replicas": 3,
+      "storage": "file",
+      "description": "Application configuration"
+    },
+    {
+      "bucket": "app-sessions",
+      "history": 1,
+      "ttl": "24h",
+      "replicas": 3,
+      "storage": "file"
+    }
+  ],
+
+  "_object_stores_note": "Object stores chunk large blobs across JetStream. Prefer them (or external object storage like MinIO) over oversized messages.",
+  "object_stores": [
+    {
+      "bucket": "app-blobs",
+      "replicas": 3,
+      "storage": "file",
+      "ttl": "0s",
+      "description": "Large payloads / attachments"
+    }
+  ],
+
+  "_consumers_note": "Durable consumers track delivery on a stream. ack_policy: explicit | none | all. deliver_policy: all | last | new | by_start_sequence | by_start_time. ack_wait is NANOSECONDS. filter_subject narrows the stream subjects this consumer receives.",
+  "consumers": [
+    {
+      "stream": "${APP_STREAM_NAME}",
+      "name": "workers",
+      "ack_policy": "explicit",
+      "deliver_policy": "all",
+      "replay_policy": "instant",
+      "max_deliver": 5,
+      "ack_wait": 30000000000,
+      "max_ack_pending": 1000,
+      "filter_subject": "app.events.>"
+    }
+  ]
+}

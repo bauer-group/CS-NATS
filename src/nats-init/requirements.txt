@@ -1,0 +1,5 @@
+# Runtime dependencies for the NATS init container.
+# Floating minor versions are acceptable (BAUER GROUP security standard);
+# Dependabot opens PRs for updates. The `nats` CLI itself is copied from the
+# natsio/nats-box image at build time (see Dockerfile) — not a pip dependency.
+rich>=13,<15

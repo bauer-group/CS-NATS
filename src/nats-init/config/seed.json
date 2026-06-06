@@ -1,0 +1,25 @@
+{
+  "_comment": "BAUER GROUP NATS - baked demo topology. Seeded into the config volume on first boot (cluster/traefik/coolify) if no user topology exists, then editable at runtime. Literal names (no ${VAR}) so it is self-contained. Replace with your own topology; full field reference: docs/messaging-topology.md.",
+
+  "streams": [
+    {
+      "name": "demo-events",
+      "subjects": ["demo.events.>"],
+      "retention": "limits",
+      "storage": "file",
+      "num_replicas": 3,
+      "max_age": 604800000000000,
+      "discard": "old",
+      "duplicate_window": 120000000000
+    }
+  ],
+
+  "kv": [
+    {
+      "bucket": "demo-config",
+      "history": 5,
+      "replicas": 3,
+      "storage": "file"
+    }
+  ]
+}

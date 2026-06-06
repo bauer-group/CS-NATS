@@ -1,0 +1,199 @@
+# =============================================================================
+# NATS - Cluster Mode (Direct Port Access)
+# =============================================================================
+# Usage: docker compose -f docker-compose.cluster.yml up -d
+#
+# Pre-built GHCR images, 3-node JetStream cluster (RAFT) with direct host port
+# binding, no reverse proxy. The init container seeds the demo topology into the
+# nats-config volume on first boot (editable at runtime).
+#
+# PREREQUISITES (run once, in order):
+#   python scripts/generate-env.py
+#   python scripts/generate-credentials.py
+#
+# Access:
+#   - Client      nats://localhost:${PORT_CLIENT:-4222}   (also :4223 / :4224)
+#   - Monitoring  http://localhost:${PORT_MONITOR:-8222}/healthz
+#   - Metrics     http://localhost:${PORT_METRICS:-7777}/metrics
+# =============================================================================
+
+
+### Shared environment (mapping anchor — merged per node, then server_name overridden) ###
+x-nats-env: &nats-env
+  TZ: ${TIME_ZONE:-Etc/UTC}
+  NATS_CLUSTER_NAME: ${NATS_CLUSTER_NAME:-bauergroup}
+  NATS_ROUTE_USER: ${NATS_ROUTE_USER:-route}
+  NATS_ROUTE_PASSWORD: ${NATS_ROUTE_PASSWORD:-route}
+  NATS_JS_MAX_MEM: ${NATS_JS_MAX_MEM:-1G}
+  NATS_JS_MAX_FILE: ${NATS_JS_MAX_FILE:-10G}
+  NATS_MAX_PAYLOAD: ${NATS_MAX_PAYLOAD:-8MB}
+  NATS_MAX_CONNECTIONS: ${NATS_MAX_CONNECTIONS:-65536}
+  NATS_TLS_MODE: ${NATS_TLS_MODE:-selfsigned}
+  NATS_TLS_VERIFY: ${NATS_TLS_VERIFY:-false}
+  NATS_TLS_CN: ${NATS_CLIENT_HOSTNAME:-localhost}
+  NATS_TLS_MANAGED_WAIT: ${NATS_TLS_MANAGED_WAIT:-0}
+  NATS_OPERATOR_JWT: ${NATS_OPERATOR_JWT}
+  NATS_SYS_ACCOUNT_ID: ${NATS_SYS_ACCOUNT_ID}
+  NATS_SYS_ACCOUNT_JWT: ${NATS_SYS_ACCOUNT_JWT}
+  NATS_APP_ACCOUNT_ID: ${NATS_APP_ACCOUNT_ID}
+  NATS_APP_ACCOUNT_JWT: ${NATS_APP_ACCOUNT_JWT}
+
+### Common service definition (reused by all three nodes) ###
+x-nats-common: &nats-common
+  image: ${NATS_IMAGE:-ghcr.io/bauer-group/cs-nats/nats}:${NATS_IMAGE_VERSION:-latest}
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "3"
+  healthcheck:
+    test: ["CMD-SHELL", "wget -q -O - 'http://127.0.0.1:8222/healthz?js-enabled-only=true' >/dev/null 2>&1 || exit 1"]
+    interval: 15s
+    timeout: 5s
+    retries: 5
+    start_period: 30s
+  networks:
+    local:
+
+
+services:
+  nats-1:
+    <<: *nats-common
+    container_name: ${STACK_NAME:-nats}_NODE1
+    hostname: nats-1
+    environment:
+      <<: *nats-env
+      NATS_SERVER_NAME: nats-1
+    ports:
+      - "${PORT_CLIENT:-4222}:4222"
+      - "${PORT_MONITOR:-8222}:8222"
+    volumes:
+      - nats1-data:/data
+      - nats-certs:/etc/nats/certs
+
+  nats-2:
+    <<: *nats-common
+    container_name: ${STACK_NAME:-nats}_NODE2
+    hostname: nats-2
+    environment:
+      <<: *nats-env
+      NATS_SERVER_NAME: nats-2
+    ports:
+      - "${PORT_CLIENT_2:-4223}:4222"
+    volumes:
+      - nats2-data:/data
+      - nats-certs:/etc/nats/certs
+
+  nats-3:
+    <<: *nats-common
+    container_name: ${STACK_NAME:-nats}_NODE3
+    hostname: nats-3
+    environment:
+      <<: *nats-env
+      NATS_SERVER_NAME: nats-3
+    ports:
+      - "${PORT_CLIENT_3:-4224}:4222"
+    volumes:
+      - nats3-data:/data
+      - nats-certs:/etc/nats/certs
+
+  nats-box:
+    image: ${NATS_BOX_IMAGE:-natsio/nats-box}:${NATS_BOX_VERSION:-latest}
+    container_name: ${STACK_NAME:-nats}_BOX
+    restart: unless-stopped
+    entrypoint: ["sh", "-c", "trap : TERM INT; sleep infinity & wait"]
+    environment:
+      - NATS_URL=nats://nats-1:4222,nats://nats-2:4222,nats://nats-3:4222
+      - NATS_CREDS=/creds/admin.creds
+      - NATS_CA=/certs/ca.pem
+    volumes:
+      - ./creds:/creds:ro
+      - nats-certs:/certs:ro
+    depends_on:
+      - nats-1
+      - nats-2
+      - nats-3
+    networks:
+      local:
+
+  nats-init:
+    image: ${NATS_INIT_IMAGE:-ghcr.io/bauer-group/cs-nats/nats-init}:${NATS_INIT_VERSION:-latest}
+    container_name: ${STACK_NAME:-nats}_INIT
+    restart: "no"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "1"
+    environment:
+      - TZ=${TIME_ZONE:-Etc/UTC}
+      - NATS_URLS=nats://nats-1:4222,nats://nats-2:4222,nats://nats-3:4222
+      - NATS_CREDS=/creds/admin.creds
+      - NATS_TLS_CA=/certs/ca.pem
+      - NATS_WAIT_TIMEOUT=${NATS_WAIT_TIMEOUT:-120}
+      - APP_STREAM_NAME=${APP_STREAM_NAME:-app-events}
+    volumes:
+      # Topology on a named volume, seeded with the demo on first boot and
+      # editable at runtime. To start from the full example instead:
+      # docker cp config/nats-topology.example.json <INIT>:/config/nats-topology.json
+      - nats-config:/config
+      - ./creds:/creds:ro
+      - nats-certs:/certs:ro
+    depends_on:
+      nats-1:
+        condition: service_started
+    networks:
+      local:
+
+  nats-exporter:
+    image: ${NATS_EXPORTER_IMAGE:-natsio/prometheus-nats-exporter}:${NATS_EXPORTER_VERSION:-latest}
+    container_name: ${STACK_NAME:-nats}_EXPORTER
+    restart: unless-stopped
+    command:
+      - "-port=7777"
+      - "-varz"
+      - "-jsz=all"
+      - "-connz"
+      - "-routez"
+      - "-gatewayz"
+      - "-leafz"
+      - "-subz"
+      - "http://nats-1:8222"
+      - "http://nats-2:8222"
+      - "http://nats-3:8222"
+    ports:
+      - "${PORT_METRICS:-7777}:7777"
+    depends_on:
+      - nats-1
+      - nats-2
+      - nats-3
+    networks:
+      local:
+
+
+### Volumes ###
+volumes:
+  nats1-data:
+    driver: local
+    name: ${STACK_NAME:-nats}-node1-data
+  nats2-data:
+    driver: local
+    name: ${STACK_NAME:-nats}-node2-data
+  nats3-data:
+    driver: local
+    name: ${STACK_NAME:-nats}-node3-data
+  nats-certs:
+    driver: local
+    name: ${STACK_NAME:-nats}-certs
+  nats-config:
+    driver: local
+    name: ${STACK_NAME:-nats}-config
+
+
+### Networks ###
+networks:
+  local:
+    driver: bridge
+    name: ${STACK_NAME:-nats}
+    enable_ipv6: true

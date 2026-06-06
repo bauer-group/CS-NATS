@@ -1,0 +1,37 @@
+# =============================================================================
+# Docker Ignore - Root Level
+# =============================================================================
+
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+.claude
+.DS_Store
+Thumbs.db
+
+*.md
+LICENSE
+CHANGELOG.md
+
+.env
+.env.*
+!.env.example
+
+# Secrets / generated material never belongs in a build context
+.nsc
+creds
+certs
+*.creds
+*.nk
+*.pem
+
+docker-compose*.yml
+
+__pycache__
+*.py[cod]
+.pytest_cache
+.venv
+venv

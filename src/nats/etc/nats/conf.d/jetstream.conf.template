@@ -1,0 +1,22 @@
+# =============================================================================
+# BAUER GROUP NATS - JetStream Configuration (TEMPLATE)
+# =============================================================================
+# Rendered by docker-entrypoint-custom.sh (envsubst). Server-LEVEL JetStream
+# limits cap what this node may store. They are independent of the ACCOUNT-level
+# JetStream limits set per account via nsc (see docs/security-and-auth.md) — a
+# stream needs headroom in BOTH layers. See docs/sizing-and-tuning.md.
+# =============================================================================
+
+jetstream {
+  store_dir: "/data/jetstream"
+
+  # Max in-memory store across all memory streams on this node.
+  max_memory_store: ${NATS_JS_MAX_MEM}
+
+  # Max on-disk store across all file streams on this node.
+  max_file_store: ${NATS_JS_MAX_FILE}
+
+  # A JetStream domain isolates this cluster from leaf/edge JetStreams. Left
+  # unset for the lean starter; document before enabling (it changes API
+  # subjects). Example: domain: "hub"
+}

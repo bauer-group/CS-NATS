@@ -1,0 +1,29 @@
+# =============================================================================
+# BAUER GROUP NATS - Authentication (TEMPLATE)
+# =============================================================================
+# Operator / JWT (decentralized) auth with the MEMORY resolver.
+#
+# Rendered by docker-entrypoint-custom.sh (envsubst). All values here are the
+# PUBLIC operator + account JWTs produced by scripts/generate-credentials.py and
+# carried in .env — they contain only public keys and permission grants, never
+# secrets (the secret nkey seeds live in .creds files, gitignored).
+#
+# The MEMORY resolver preloads a fixed account set (SYS + APP). To add accounts
+# without a config change/restart, switch to the NATS full resolver and push via
+# `nsc push` — see docs/clustering.md.
+# =============================================================================
+
+operator: "${NATS_OPERATOR_JWT}"
+
+# The system account ($SYS) powers internal cluster messaging, `nats server`
+# admin commands, and surveyor-style monitoring. MUST be set and preloaded.
+system_account: ${NATS_SYS_ACCOUNT_ID}
+
+resolver: MEMORY
+
+resolver_preload: {
+  # SYS — system account (required)
+  ${NATS_SYS_ACCOUNT_ID}: "${NATS_SYS_ACCOUNT_JWT}"
+  # APP — application account (JetStream enabled via nsc account limits)
+  ${NATS_APP_ACCOUNT_ID}: "${NATS_APP_ACCOUNT_JWT}"
+}

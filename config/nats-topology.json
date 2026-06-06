@@ -1,0 +1,38 @@
+{
+  "_comment": "BAUER GROUP NATS - demo declarative topology (mounted in development). Full field reference: docs/messaging-topology.md. ${VAR} placeholders resolve from the nats-init environment (missing var = hard error). Keys starting with _ are comments. Processed idempotently on every start; additive only (never deletes). Durations are NANOSECONDS (JetStream wire format).",
+
+  "streams": [
+    {
+      "name": "${APP_STREAM_NAME}",
+      "subjects": ["app.events.>"],
+      "retention": "limits",
+      "storage": "file",
+      "num_replicas": 3,
+      "max_age": 604800000000000,
+      "max_bytes": 1073741824,
+      "discard": "old",
+      "duplicate_window": 120000000000
+    }
+  ],
+
+  "kv": [
+    {
+      "bucket": "app-config",
+      "history": 5,
+      "replicas": 3,
+      "storage": "file"
+    }
+  ],
+
+  "consumers": [
+    {
+      "stream": "${APP_STREAM_NAME}",
+      "name": "workers",
+      "ack_policy": "explicit",
+      "deliver_policy": "all",
+      "max_deliver": 5,
+      "ack_wait": 30000000000,
+      "filter_subject": "app.events.>"
+    }
+  ]
+}

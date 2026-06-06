@@ -1,0 +1,45 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bauer-group/automation-templates/main/.github/config/docker-base-image-monitor/docker-base-images.schema.json",
+  "_description": "CS-NATS stack — UPSTREAM base images consumed via the Dockerfiles and the sidecars. The monitor tracks their digests and triggers a release when one moves. It MUST NOT track this repo's own published images (ghcr.io/bauer-group/cs-nats/*): doing so would loop — a release republishes them, their digest moves, the monitor fires again, forever.",
+  "images": [
+    {
+      "name": "nats",
+      "image": "nats",
+      "tag": "2-alpine",
+      "variable": "NATS_ALPINE_DIGEST",
+      "description": "NATS server base image, floating 2.x on Alpine (src/nats/Dockerfile)"
+    },
+    {
+      "name": "python-alpine",
+      "image": "python",
+      "tag": "3.14-alpine",
+      "variable": "PYTHON_ALPINE_DIGEST",
+      "description": "Runtime base for the nats-init container (src/nats-init/Dockerfile)"
+    },
+    {
+      "name": "nats-box",
+      "image": "natsio/nats-box",
+      "tag": "latest",
+      "variable": "NATS_BOX_DIGEST",
+      "description": "Provides the nats CLI for nats-init (multi-stage) and the nats-box service"
+    },
+    {
+      "name": "prometheus-nats-exporter",
+      "image": "natsio/prometheus-nats-exporter",
+      "tag": "latest",
+      "variable": "NATS_EXPORTER_DIGEST",
+      "description": "Prometheus exporter scraping the node monitoring endpoints (docker-compose*.yml)"
+    },
+    {
+      "name": "traefik-certs-dumper",
+      "image": "ldez/traefik-certs-dumper",
+      "tag": "latest",
+      "variable": "TRAEFIK_CERTS_DUMPER_DIGEST",
+      "description": "Optional sidecar that dumps Let's Encrypt certs for client TLS (docker-compose.traefik.yml)"
+    }
+  ],
+  "settings": {
+    "commit-prefix": "chore(deps)",
+    "auto-create-variables": true
+  }
+}
