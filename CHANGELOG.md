@@ -1,3 +1,5 @@
+## [0.1.4](https://github.com/bauer-group/CS-NATS/compare/v0.1.3...v0.1.4) (2026-06-23)
+
 ## [0.1.3](https://github.com/bauer-group/CS-NATS/compare/v0.1.2...v0.1.3) (2026-06-16)
 
 ## [0.1.2](https://github.com/bauer-group/CS-NATS/compare/v0.1.1...v0.1.2) (2026-06-11)
