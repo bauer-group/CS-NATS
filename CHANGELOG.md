@@ -1,3 +1,9 @@
+## [0.1.6](https://github.com/bauer-group/CS-NATS/compare/v0.1.5...v0.1.6) (2026-07-31)
+
+### 🐛 Bug Fixes
+
+* **ci:** added the missing permissions block ([f6b9547](https://github.com/bauer-group/CS-NATS/commit/f6b9547bb3c98b59fef04c088e07f2c6409eed6c))
+
 ## [0.1.5](https://github.com/bauer-group/CS-NATS/compare/v0.1.4...v0.1.5) (2026-06-30)
 
 ## [0.1.4](https://github.com/bauer-group/CS-NATS/compare/v0.1.3...v0.1.4) (2026-06-23)
