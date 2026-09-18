@@ -4,6 +4,14 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.1.13](https://github.com/bauer-group/CS-NATS/compare/v0.1.12...v0.1.13) (2026-09-18)
+
+### 🔧 Maintenance
+
+* **deps:** update base image nats, python-alpine ([11b93c8](https://github.com/bauer-group/CS-NATS/commit/11b93c8cf6b6f9a0057ff126184941441e224c1a))
+* update Dockerfile version to 0.1.12 ([e6c3e87](https://github.com/bauer-group/CS-NATS/commit/e6c3e877fdc4e881b9603571c9fd52bc5fc6dacf))
+* update Dockerfile version to 0.1.12 ([a298971](https://github.com/bauer-group/CS-NATS/commit/a2989712fcd86eb863074c808643781920673df2))
+
 ## [0.1.12](https://github.com/bauer-group/CS-NATS/compare/v0.1.11...v0.1.12) (2026-09-16)
 
 ### 🔧 Maintenance
