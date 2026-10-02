@@ -4,6 +4,15 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.1.15](https://github.com/bauer-group/CS-NATS/compare/v0.1.14...v0.1.15) (2026-10-02)
+
+### 🔧 Maintenance
+
+* **ci:** removed issue AI summary workflow ([a787afb](https://github.com/bauer-group/CS-NATS/commit/a787afb5a8746a15ab98919fbdc5cce57838751a)), references [bauer-group/automation-templates#105](https://github.com/bauer-group/automation-templates/issues/105)
+* **deps:** update base image python-alpine ([aced365](https://github.com/bauer-group/CS-NATS/commit/aced36596c4586e72ae690bc6a85f7c0e1ab8955))
+* update Dockerfile version to 0.1.14 ([2ec089a](https://github.com/bauer-group/CS-NATS/commit/2ec089a4ff5fa734c56b35edc66fd974e2b3df2f))
+* update Dockerfile version to 0.1.14 ([0508993](https://github.com/bauer-group/CS-NATS/commit/0508993f01802a9ed6abc49dc8c99bc06ca4f880))
+
 ## [0.1.14](https://github.com/bauer-group/CS-NATS/compare/v0.1.13...v0.1.14) (2026-09-23)
 
 ### 🔧 Maintenance
