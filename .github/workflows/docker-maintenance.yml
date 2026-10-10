@@ -1,11 +1,17 @@
 name: 🔧 Docker Maintenance
 
 on:
+  # No paths filter: every Dependabot PR (docker, pip, docker-compose,
+  # github-actions) reaches the module and gets a decision and an annotation
+  # instead of silently staying open. It merges only what the required
+  # workflow below ran on and passed; GitHub Actions updates and changes
+  # under .github/ always stay open for review.
+  # docker-compose.*.yml are only validated (docker compose config), never
+  # started, by that workflow. Their images are ${VAR:-image}:${VAR:-latest},
+  # which Dependabot cannot version, so no such PR arises - pin a compose
+  # image to a version only together with a PR test that starts it.
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths:
-      - 'src/nats/Dockerfile'
-      - 'src/nats-init/Dockerfile'
 
 permissions:
   contents: write
