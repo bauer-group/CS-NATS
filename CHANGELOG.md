@@ -4,6 +4,14 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.1.17](https://github.com/bauer-group/CS-NATS/compare/v0.1.16...v0.1.17) (2026-10-22)
+
+### 🔧 Maintenance
+
+* **deps:** update base image nats, python-alpine, nats-box, prometheus-nats-exporter [skip ci] ([0829566](https://github.com/bauer-group/CS-NATS/commit/082956645970aa574f7313126796298b473050ec))
+* update Dockerfile version to 0.1.16 ([e503ea2](https://github.com/bauer-group/CS-NATS/commit/e503ea2ce1221abd52bf69ed7359a18269586c78))
+* update Dockerfile version to 0.1.16 ([8350ab9](https://github.com/bauer-group/CS-NATS/commit/8350ab9ac5d84872c4614996d7b412fa85e7f878))
+
 ## [0.1.16](https://github.com/bauer-group/CS-NATS/compare/v0.1.15...v0.1.16) (2026-10-13)
 
 ### 🔧 Maintenance
