@@ -4,6 +4,14 @@ All notable changes to this project are documented here. This file is maintained
 automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
 on every release to `main`.
 
+## [0.1.20](https://github.com/bauer-group/CS-NATS/compare/v0.1.19...v0.1.20) (2026-11-03)
+
+### 🔧 Maintenance
+
+* **deps:** update base image nats-box [skip ci] ([e990855](https://github.com/bauer-group/CS-NATS/commit/e9908556a3aae4da049bb9d45564bda0211b0b2d))
+* update Dockerfile version to 0.1.19 ([c0a457f](https://github.com/bauer-group/CS-NATS/commit/c0a457fe7a575a7cb7ff9b04d72e566beb4f8685))
+* update Dockerfile version to 0.1.19 ([54d1a38](https://github.com/bauer-group/CS-NATS/commit/54d1a3802bee4e39c4c58f16a16d8b0fbe46fe8f))
+
 ## [0.1.19](https://github.com/bauer-group/CS-NATS/compare/v0.1.18...v0.1.19) (2026-10-28)
 
 ### 🔧 Maintenance
