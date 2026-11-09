@@ -14,8 +14,11 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write       # merge
+  pull-requests: write  # approve, read the PR
+  checks: read          # check runs and suites
+  statuses: read        # commit statuses
+  actions: write        # dispatch the release; read workflow runs
 
 jobs:
   maintenance:
@@ -27,4 +30,10 @@ jobs:
       # Merge only after this PR CI has passed on the PR head commit - it
       # tests nats-init and builds the images.
       required-workflows: '.github/workflows/docker-release.yml'
+      # A merge made with the GITHUB_TOKEN starts no push workflow: dispatch
+      # the release on main after a merge and fail this job if it does not
+      # succeed (release-wait-minutes, default 60). That run tests and builds
+      # the merged commit again, releases exactly that commit (fix(docker) /
+      # fix(deps) -> PATCH) and pushes the images only if it released.
+      release-workflow: '.github/workflows/docker-release.yml'
     secrets: inherit

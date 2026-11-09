@@ -69,20 +69,38 @@ jobs:
         run: pytest
 
   # ============================================
-  # Release Job (only on main branch push)
+  # Release Job (push to main or dispatch)
   # ============================================
+  # Needs the validation, the nats-init tests and both image builds of this
+  # run (the *-validate jobs below run on every event and push nothing): a
+  # failed test or build skips the release and every image push. Only a run
+  # that created a release publishes - never a PR, a branch dispatch or a
+  # run that released nothing.
 
   release:
     name: 📦 Create Semantic Release
-    needs: [validate-compose, validate-scripts, test-init]
+    needs:
+      - validate-compose
+      - validate-scripts
+      - test-init
+      - docker-build-nats-validate
+      - docker-build-init-validate
     if: |
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
       needs.validate-compose.result == 'success' &&
       needs.validate-scripts.result == 'success' &&
-      needs.test-init.result == 'success'
+      needs.test-init.result == 'success' &&
+      needs.docker-build-nats-validate.result == 'success' &&
+      needs.docker-build-init-validate.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
     with:
       target-branch: 'main'
+      # Release the commit this run validated and built - the image jobs
+      # below build it too. Unpinned, the release would take the tip of
+      # main: a push that landed meanwhile would be tagged untested and be
+      # missing from the images. Pinned, nothing is released once main has
+      # moved on, and the run for the newer main releases both.
+      ref: ${{ github.sha }}
       dry-run: false
       force-release: ${{ inputs.force-release || false }}
     secrets: inherit
@@ -121,11 +139,13 @@ jobs:
       sync-dockerhub-readme: true
     secrets: inherit
 
-  docker-build-nats-pr:
-    name: 🔨 Validate nats Build (PR)
+  # Every event (PR, push, dispatch): builds the image from this commit
+  # without pushing - the PR CI docker-maintenance.yml waits for, and on a
+  # push or dispatch a gate of the release.
+  docker-build-nats-validate:
+    name: 🔨 Validate nats Build
     needs: [validate-compose, validate-scripts, test-init]
     if: |
-      github.event_name == 'pull_request' &&
       needs.validate-compose.result == 'success' &&
       needs.validate-scripts.result == 'success' &&
       needs.test-init.result == 'success'
@@ -179,11 +199,13 @@ jobs:
       sync-dockerhub-readme: true
     secrets: inherit
 
-  docker-build-init-pr:
-    name: 🔨 Validate nats-init Build (PR)
+  # Every event (PR, push, dispatch): builds the image from this commit
+  # without pushing - the PR CI docker-maintenance.yml waits for, and on a
+  # push or dispatch a gate of the release.
+  docker-build-init-validate:
+    name: 🔨 Validate nats-init Build
     needs: [validate-compose, validate-scripts, test-init]
     if: |
-      github.event_name == 'pull_request' &&
       needs.validate-compose.result == 'success' &&
       needs.validate-scripts.result == 'success' &&
       needs.test-init.result == 'success'

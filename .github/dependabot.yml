@@ -9,6 +9,18 @@
 #
 # Pure digest drift on existing tags is handled by check-base-images.yml
 # (daily cron); this surfaces tag bumps and version updates as PRs.
+#
+# Commit prefixes decide whether a merged update is released:
+#   docker, docker-compose -> fix(docker): PATCH release, the images are
+#                             rebuilt (base images and the compose files
+#                             ship to users)
+#   pip (nats-init)        -> fix(deps): PATCH release with rebuilt images.
+#                             prefix-development (chore(deps-dev)) applies
+#                             only to requirements files whose name contains
+#                             "dev"; requirements-test.txt does not, so its
+#                             pytest updates release too (redundant, the
+#                             runtime image is unchanged - never a missed one)
+#   github-actions         -> chore(ci): no release, never auto-merged
 # =============================================================================
 
 version: 2
@@ -41,7 +53,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "fix(docker)"
 
   # nats server base image (nats:*-alpine in src/nats/Dockerfile)
   - package-ecosystem: "docker"
@@ -56,7 +68,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # nats-init base images (python:*-alpine + natsio/nats-box in src/nats-init/Dockerfile)
   - package-ecosystem: "docker"
@@ -71,7 +83,7 @@ updates:
       - "docker"
       - "dependabot"
     commit-message:
-      prefix: "chore(docker)"
+      prefix: "fix(docker)"
 
   # nats-init Python deps (requirements.txt + requirements-test.txt)
   - package-ecosystem: "pip"
@@ -86,4 +98,5 @@ updates:
       - "python"
       - "dependabot"
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "fix(deps)"
+      prefix-development: "chore(deps-dev)"
