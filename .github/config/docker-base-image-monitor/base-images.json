@@ -5,21 +5,21 @@
     {
       "name": "nats",
       "image": "nats",
-      "tag": "2-alpine",
+      "dockerfile": "src/nats/Dockerfile",
       "variable": "NATS_ALPINE_DIGEST",
       "description": "NATS server base image, floating 2.x on Alpine (src/nats/Dockerfile)"
     },
     {
       "name": "python-alpine",
       "image": "python",
-      "tag": "3.14-alpine",
+      "dockerfile": "src/nats-init/Dockerfile",
       "variable": "PYTHON_ALPINE_DIGEST",
       "description": "Runtime base for the nats-init container (src/nats-init/Dockerfile)"
     },
     {
       "name": "nats-box",
       "image": "natsio/nats-box",
-      "tag": "latest",
+      "dockerfile": "src/nats-init/Dockerfile",
       "variable": "NATS_BOX_DIGEST",
       "description": "Provides the nats CLI for nats-init (multi-stage) and the nats-box service"
     },
